@@ -1,6 +1,6 @@
 {
   "name": "mermaid-diagram-generator",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Genera imagen del diagrama Mermaid y expone un MCP daemon compatible con VSCode e IntelliJ",
   "main": "mcp-server.js",
   "bin": {
@@ -12,22 +12,34 @@
     "start": "node mcp-server.js",
     "publish:public": "npm publish --access public"
   },
-  "keywords": ["mermaid","mcp","diagram","copilot","generator"],
-  "files": ["scripts","mcp-server.js","diagrama-flujo-mantenimiento.mmd","README.md"],
+  "keywords": [
+    "mermaid",
+    "mcp",
+    "diagram",
+    "copilot",
+    "generator"
+  ],
+  "files": [
+    "scripts",
+    "mcp-server.js",
+    "diagrama-flujo-mantenimiento.mmd",
+    "README.md"
+  ],
   "author": "jdug",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR.git"
-  }
-  ,
+  },
   "engines": {
     "node": ">=14"
   },
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.12.0"
+  },
   "publishConfig": {
     "access": "public"
-  }
-  ,
+  },
   "bugs": {
     "url": "https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR/issues"
   },
