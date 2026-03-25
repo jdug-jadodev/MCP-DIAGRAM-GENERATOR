@@ -5,9 +5,14 @@ const { spawn } = require('child_process');
 const http = require('http');
 
 const INPUT = path.resolve(__dirname, '..', 'diagrama-flujo-mantenimiento.mmd');
-const OUTPUT_BASE = path.resolve(process.cwd(), 'diagrama-flujo-mantenimiento');
+const DEFAULT_BASENAME = 'diagrama-flujo';
 
-function generate(source) {
+function outputBaseFor(filename) {
+  const base = filename && String(filename).trim() ? filename : DEFAULT_BASENAME;
+  return path.resolve(process.cwd(), base);
+}
+
+function generate(source, filename) {
   if (source && String(source).trim()) {
     try {
       fs.writeFileSync(INPUT, source, 'utf8');
@@ -24,13 +29,15 @@ function generate(source) {
     throw err;
   }
 
+  const outputBase = outputBaseFor(filename);
+
   // Usa el binario local de mermaid-cli si existe, sino intenta con npx
   const localBin = path.resolve(__dirname, '..', 'node_modules', '.bin', process.platform === 'win32' ? 'mmdc.cmd' : 'mmdc');
   const useLocal = fs.existsSync(localBin);
   const cmd = useLocal ? localBin : 'npx';
 
   // Generar solo SVG (vectorial) — evita pixelado al hacer zoom.
-  const svgArgs = ['-i', INPUT, '-o', `${OUTPUT_BASE}.svg`, '-b', '#000000', '-t', 'dark', '--quiet'];
+  const svgArgs = ['-i', INPUT, '-o', `${outputBase}.svg`, '-b', '#000000', '-t', 'dark', '--quiet'];
   const args = useLocal ? svgArgs : ['-y', '@mermaid-js/mermaid-cli@10.0.0', ...svgArgs];
   const p = spawn(cmd, args, { shell: true });
   p.stdout.on('data', d => process.stdout.write(d));
@@ -38,8 +45,9 @@ function generate(source) {
   return new Promise((resolve, reject) => {
     p.on('close', code => {
       if (code === 0) {
-        console.log(`Generado: ${OUTPUT_BASE}.svg`);
-        resolve(`${OUTPUT_BASE}.svg`);
+        const outPath = `${outputBase}.svg`;
+        console.log(`Generado: ${outPath}`);
+        resolve(outPath);
       } else {
         const e = new Error('mermaid-cli-exit-' + code);
         e.code = code;
@@ -61,9 +69,31 @@ function createHttpServer() {
       req.on('data', chunk => body += chunk);
       req.on('end', async () => {
         try {
-          await generate(body);
+          let source = '';
+          const ct = req.headers['content-type'] || '';
+          if (ct.includes('application/json')) {
+            try {
+              const obj = JSON.parse(body || '{}');
+              source = obj.source || obj.mmd || obj.prompt || '';
+              var filename = obj.filename;
+            } catch (e) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ status: 'error', message: 'invalid-json' }));
+              return;
+            }
+          } else {
+            source = body;
+          }
+
+          if (!String(source || '').trim()) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'error', message: 'empty-source' }));
+            return;
+          }
+
+          const out = await generate(source, filename);
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ status: 'ok', outputs: [`${OUTPUT_BASE}.svg`] }));
+          res.end(JSON.stringify({ status: 'ok', outputs: [out] }));
         } catch (e) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ status: 'error', message: e.message }));
@@ -72,8 +102,11 @@ function createHttpServer() {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/diagram') {
-      const svgPath = `${OUTPUT_BASE}.svg`;
+    if (req.method === 'GET' && req.url && req.url.startsWith('/diagram')) {
+      // support optional query param ?name=basename (without .svg)
+      const u = new URL(req.url, `http://localhost`);
+      const name = u.searchParams.get('name');
+      const svgPath = `${outputBaseFor(name)}.svg`;
       if (fs.existsSync(svgPath)) {
         const stat = fs.statSync(svgPath);
         res.writeHead(200, {

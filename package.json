@@ -1,6 +1,6 @@
 {
   "name": "mermaid-diagram-generator",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Genera imagen del diagrama Mermaid y expone un pequeño MCP-compatible HTTP adapter",
   "main": "mcp-server.js",
   "bin": {
@@ -9,7 +9,8 @@
   "scripts": {
     "generate-diagram": "node scripts/generate-diagram.js",
     "serve-diagram": "node scripts/generate-diagram.js --server",
-    "start": "node mcp-server.js"
+    "start": "node mcp-server.js",
+    "publish:public": "npm publish --access public"
   },
   "keywords": ["mermaid","mcp","diagram","copilot","generator"],
   "files": ["scripts","mcp-server.js","diagrama-flujo-mantenimiento.mmd","README.md"],
@@ -19,4 +20,16 @@
     "type": "git",
     "url": "https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR.git"
   }
+  ,
+  "engines": {
+    "node": ">=14"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+  ,
+  "bugs": {
+    "url": "https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR/issues"
+  },
+  "homepage": "https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR#readme"
 }

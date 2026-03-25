@@ -1,0 +1,9 @@
+node_modules/
+.git/
+.gitignore
+.vscode/
+*.log
+.DS_Store
+diagrama-flujo-mantenimiento.svg
+diagrama-flujo.svg
+diagrama-*.svg
