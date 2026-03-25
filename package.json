@@ -1,7 +1,7 @@
 {
   "name": "mermaid-diagram-generator",
-  "version": "0.2.0",
-  "description": "Genera imagen del diagrama Mermaid y expone un pequeño MCP-compatible HTTP adapter",
+  "version": "0.2.1",
+  "description": "Genera imagen del diagrama Mermaid y expone un MCP daemon compatible con VSCode e IntelliJ",
   "main": "mcp-server.js",
   "bin": {
     "mermaid-mcp": "mcp-server.js"
