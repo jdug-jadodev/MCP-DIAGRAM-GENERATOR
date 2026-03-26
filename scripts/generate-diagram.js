@@ -17,13 +17,13 @@ function generate(source, filename) {
     try {
       fs.writeFileSync(INPUT, source, 'utf8');
     } catch (e) {
-      console.error('No se pudo escribir el archivo de entrada:', e.message || e);
+      process.stderr.write(`No se pudo escribir el archivo de entrada: ${e.message || e}\n`);
       throw e;
     }
   }
 
   if (!fs.existsSync(INPUT)) {
-    console.error('No se encontró el archivo de entrada:', INPUT);
+    process.stderr.write(`No se encontró el archivo de entrada: ${INPUT}\n`);
     const err = new Error('input-not-found');
     err.code = 'INPUT_NOT_FOUND';
     throw err;
@@ -40,23 +40,24 @@ function generate(source, filename) {
   const svgArgs = ['-i', INPUT, '-o', `${outputBase}.svg`, '-b', '#000000', '-t', 'dark', '--quiet'];
   const args = useLocal ? svgArgs : ['-y', '@mermaid-js/mermaid-cli@10.0.0', ...svgArgs];
   const p = spawn(cmd, args, { shell: true });
-  p.stdout.on('data', d => process.stdout.write(d));
+  // Redirigir a stderr para no corromper el canal stdio JSON-RPC
+  p.stdout.on('data', d => process.stderr.write(d));
   p.stderr.on('data', d => process.stderr.write(d));
   return new Promise((resolve, reject) => {
     p.on('close', code => {
       if (code === 0) {
         const outPath = `${outputBase}.svg`;
-        console.log(`Generado: ${outPath}`);
+        process.stderr.write(`Generado: ${outPath}\n`);
         resolve(outPath);
       } else {
         const e = new Error('mermaid-cli-exit-' + code);
         e.code = code;
-        console.error('mermaid-cli finalizó con código', code);
+        process.stderr.write(`mermaid-cli finalizó con código ${code}\n`);
         reject(e);
       }
     });
     p.on('error', err => {
-      console.error('Error ejecutando mermaid-cli:', err.message || err);
+      process.stderr.write(`Error ejecutando mermaid-cli: ${err.message || err}\n`);
       reject(err);
     });
   });

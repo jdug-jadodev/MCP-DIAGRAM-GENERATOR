@@ -85,8 +85,13 @@ function getUntrackedFiles(callback) {
             return;
         }
 
+        const ignoredDirs = ['node_modules', '.git', 'target', 'build', 'dist'];
+
         const files = stdout.split('\n')
             .filter(f => f.trim() && !f.includes('cambios-registro.md'))
+            .filter(f => !ignoredDirs.some(dir => 
+                f.split('/').includes(dir) || f.split('\\').includes(dir)
+            ))
             .filter((f, i, self) => self.indexOf(f) === i);
 
         callback(files);
@@ -105,6 +110,7 @@ function getGitStats(callback) {
 
             const files = [];
             const lines = stdout.split('\n').filter(line => line.trim());
+            const ignoredDirs = ['node_modules', '.git', 'target', 'build', 'dist'];
 
             lines.forEach(line => {
                 const parts = line.split('\t');
@@ -113,7 +119,12 @@ function getGitStats(callback) {
                     const deleted = parts[1] === '-' ? 0 : parseInt(parts[1]) || 0;
                     const filename = parts[2];
 
-                    if (filename && !filename.includes('cambios-registro.md')) {
+                    // Omitir archivos de directorios ignorados
+                    const shouldIgnore = ignoredDirs.some(dir => 
+                        filename.split('/').includes(dir) || filename.split('\\').includes(dir)
+                    );
+
+                    if (filename && !filename.includes('cambios-registro.md') && !shouldIgnore) {
                         files.push({
                             nombre: filename,
                             añadidas: added,
@@ -137,8 +148,13 @@ function getDeletedFiles(callback) {
             return;
         }
 
+        const ignoredDirs = ['node_modules', '.git', 'target', 'build', 'dist'];
+
         const files = stdout.split('\n')
-            .filter(f => f.trim() && !f.includes('cambios-registro.md'));
+            .filter(f => f.trim() && !f.includes('cambios-registro.md'))
+            .filter(f => !ignoredDirs.some(dir => 
+                f.split('/').includes(dir) || f.split('\\').includes(dir)
+            ));
 
         callback(files);
     });
@@ -152,8 +168,13 @@ function getStagedFiles(callback) {
             return;
         }
 
+        const ignoredDirs = ['node_modules', '.git', 'target', 'build', 'dist'];
+
         const files = stdout.split('\n')
-            .filter(f => f.trim() && !f.includes('cambios-registro.md'));
+            .filter(f => f.trim() && !f.includes('cambios-registro.md'))
+            .filter(f => !ignoredDirs.some(dir => 
+                f.split('/').includes(dir) || f.split('\\').includes(dir)
+            ));
 
         callback(files);
     });
@@ -333,18 +354,25 @@ getLastCommitHash((hash) => {
 // Verificar commits cada 2 segundos
 commitCheckTimer = setInterval(checkForNewCommit, 2000);
 
+// Función para verificar si debe ignorarse un archivo
+function shouldIgnoreFile(filename, ignoredDirs) {
+    if (!filename) return true;
+    
+    // Normalizar separadores de ruta
+    const normalizedPath = filename.replace(/\\/g, '/');
+    
+    return ignoredDirs.some(dir => {
+        // Verificar si está en el directorio ignorado
+        return normalizedPath.split('/').includes(dir);
+    }) || filename.includes(OUTPUT_FILE);
+}
+
 // Monitorear cambios en el sistema de archivos
 try {
     const ignoredDirs = ['node_modules', '.git', 'target', 'build', 'dist'];
 
     const watcher = fs.watch(PROJECT_PATH, { recursive: true }, (eventType, filename) => {
-        if (!filename) return;
-
-        const shouldIgnore = ignoredDirs.some(dir =>
-            filename.includes(dir) || filename.includes('\\' + dir + '\\')
-        );
-
-        if (!shouldIgnore && !filename.includes(OUTPUT_FILE)) {
+        if (!shouldIgnoreFile(filename, ignoredDirs)) {
             debouncedCheck();
         }
     });

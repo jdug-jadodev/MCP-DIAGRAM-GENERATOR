@@ -96,7 +96,7 @@ class McpDaemon {
             try {
               svgContent = fs.readFileSync(outputPath, 'utf8');
             } catch (e) {
-              console.error('No se pudo leer el SVG generado:', e.message);
+              process.stderr.write(`No se pudo leer el SVG generado: ${e.message}\n`);
             }
 
             return {
@@ -106,15 +106,7 @@ class McpDaemon {
                 content: [
                   {
                     type: 'text',
-                    text: `✅ Diagrama generado exitosamente en: ${outputPath}`
-                  },
-                  {
-                    type: 'resource',
-                    resource: {
-                      uri: `file://${outputPath}`,
-                      mimeType: 'image/svg+xml',
-                      text: svgContent
-                    }
+                    text: `✅ Diagrama generado exitosamente en: ${outputPath}\n\nPuedes abrir el archivo SVG en tu navegador o en VSCode para visualizarlo.\n\nContenido SVG:\n\`\`\`svg\n${svgContent}\n\`\`\``
                   }
                 ]
               }

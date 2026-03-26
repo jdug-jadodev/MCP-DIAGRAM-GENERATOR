@@ -4,11 +4,28 @@ Servidor MCP compatible que genera imágenes SVG a partir de diagramas Mermaid (
 
 **Versión:** 0.2.0 | **Licencia:** MIT | **Autor:** jdug | **Repositorio:** [GitHub](https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR)
 
-## Instalación local / Desarrollo
+## Instalación
+
+### Desde npm (recomendado)
+
+```bash
+npm install -g mermaid-diagram-generator
+```
+
+Inicia el servidor:
+
+```bash
+mermaid-mcp
+# Servidor MCP disponible en http://localhost:3456
+```
+
+### Instalación local / Desarrollo
 
 Desde el repositorio:
 
 ```bash
+git clone https://github.com/jdug-jadodev/MCP-DIAGRAM-GENERATOR.git
+cd MCP-DIAGRAM-GENERATOR
 npm install
 npm start
 # Servidor MCP disponible en http://localhost:3456
@@ -73,33 +90,78 @@ mermaid-mcp  # Inicia el servidor
 
 ## Integración con entornos
 
-### VSCode / Copilot
+### VSCode
 
-1. Navega a `%APPDATA%\Code\User\mcp.json` (Windows) o `~/.config/Code/User/mcp.json` (Linux/Mac)
-2. Añade la configuración:
+Requisitos: Node.js instalado
+
+#### 1. Instalar el servidor MCP
+
+```bash
+npm install -g mermaid-diagram-generator
+```
+
+> VSCode lanza el proceso automáticamente al usar la herramienta. No es necesario iniciar el servidor manualmente.
+
+#### 2. Configurar VSCode
+
+- Abre la carpeta de configuración de VSCode:
+  - **Windows:** `%APPDATA%\Code\User\`
+  - **Linux/Mac:** `~/.config/Code/User/`
+
+- Busca o crea el archivo `mcp.json`
+
+- Añade la siguiente configuración:
 
 ```json
 {
   "servers": {
-    "mermaid-mcp": {
-      "url": "http://localhost:3456",
-      "type": "http"
+    "mermaid-diagram-generator": {
+      "command": "mermaid-mcp",
+      "type": "stdio"
     }
   }
 }
 ```
 
-### IntelliJ / JetBrains
+- Guarda el archivo y reinicia VSCode
 
-Usa el mismo archivo `mcp.json` si el plugin lo soporta, o configura la URL a través de la UI del plugin.
+- Ahora puedes usar Copilot para generar diagramas Mermaid
+
+### IntelliJ / JetBrains (WebStorm, PyCharm, etc.)
+
+Requisitos: Node.js instalado y el plugin MCP de JetBrains
+
+#### 1. Instalar el servidor MCP (IntelliJ)
+
+```bash
+npm install -g mermaid-diagram-generator
+```
+
+> IntelliJ lanza el proceso automáticamente al usar la herramienta. No es necesario iniciar el servidor manualmente.
+
+#### 2. Configurar el plugin MCP en IntelliJ
+
+- Abre **Settings/Preferences** → **Tools** → **MCP**
+
+- Haz clic en **+** para añadir un nuevo servidor
+
+- Configura:
+  - **Name:** `mermaid-diagram-generator`
+  - **Command:** `mermaid-mcp`
+  - **Type:** `stdio`
+
+- Haz clic en **OK** y reinicia IntelliJ
+
+- El servidor debería aparecer en las herramientas disponibles
 
 ## Flujo de operación
 
-1. Copilot/Studio descubre el servidor accediendo a `GET /.well-known/mcp`
-2. El usuario solicita "genera un diagrama de flujo"
-3. Copilot genera el código Mermaid y envía `POST /generate` con `{ "source": "..." }`
-4. El servidor genera el SVG y lo guarda en el workspace
-5. El cliente descarga el SVG desde `GET /diagram` o especifica el nombre con `?name=diagrama-login`
+1. El IDE lanza el proceso `mermaid-mcp` automáticamente (protocolo stdio)
+2. Copilot descubre las herramientas disponibles con `tools/list`
+3. El usuario solicita "genera un diagrama de flujo"
+4. Copilot genera el código Mermaid y llama a `generate-diagram` con `{ "source": "..." }`
+5. El servidor genera el SVG y lo guarda en el workspace
+6. Copilot recibe la ruta del archivo generado como respuesta de texto
 
 ## Cambios recientes (v0.2.0)
 
